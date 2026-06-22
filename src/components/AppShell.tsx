@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/CommandPalette";
 import { CriticalAlertHost } from "@/components/CriticalAlertHost";
 
-const NAV = [
 const NAV: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/targets", label: "Target Manager", icon: Crosshair },
