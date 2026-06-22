@@ -14,12 +14,13 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { CriticalAlertHost } from "@/components/CriticalAlertHost";
 
 const NAV = [
+const NAV: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/targets", label: "Target Manager", icon: Crosshair },
   { to: "/proxy", label: "Live Intercept Proxy", icon: Radio },
   { to: "/vulnerabilities", label: "Vulnerability Tracker", icon: ShieldAlert },
   { to: "/studio", label: "API Testing Studio", icon: Zap },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
