@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VulnerabilitiesRouteImport } from './routes/vulnerabilities'
 import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as ProxyRouteImport } from './routes/proxy'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VulnerabilitiesRoute = VulnerabilitiesRouteImport.update({
+  id: '/vulnerabilities',
+  path: '/vulnerabilities',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TargetsRoute = TargetsRouteImport.update({
   id: '/targets',
   path: '/targets',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
   '/targets': typeof TargetsRoute
+  '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
   '/targets': typeof TargetsRoute
+  '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
   '/targets': typeof TargetsRoute
+  '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/proxy' | '/targets'
+  fullPaths: '/' | '/proxy' | '/targets' | '/vulnerabilities'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/proxy' | '/targets'
-  id: '__root__' | '/' | '/proxy' | '/targets'
+  to: '/' | '/proxy' | '/targets' | '/vulnerabilities'
+  id: '__root__' | '/' | '/proxy' | '/targets' | '/vulnerabilities'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProxyRoute: typeof ProxyRoute
   TargetsRoute: typeof TargetsRoute
+  VulnerabilitiesRoute: typeof VulnerabilitiesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vulnerabilities': {
+      id: '/vulnerabilities'
+      path: '/vulnerabilities'
+      fullPath: '/vulnerabilities'
+      preLoaderRoute: typeof VulnerabilitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/targets': {
       id: '/targets'
       path: '/targets'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProxyRoute: ProxyRoute,
   TargetsRoute: TargetsRoute,
+  VulnerabilitiesRoute: VulnerabilitiesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
