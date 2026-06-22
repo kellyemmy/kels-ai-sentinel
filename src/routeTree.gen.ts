@@ -9,8 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VulnerabilitiesRouteImport } from './routes/vulnerabilities'
+import { Route as TargetsRouteImport } from './routes/targets'
+import { Route as StudioRouteImport } from './routes/studio'
+import { Route as ProxyRouteImport } from './routes/proxy'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VulnerabilitiesRoute = VulnerabilitiesRouteImport.update({
+  id: '/vulnerabilities',
+  path: '/vulnerabilities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TargetsRoute = TargetsRouteImport.update({
+  id: '/targets',
+  path: '/targets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProxyRoute = ProxyRouteImport.update({
+  id: '/proxy',
+  path: '/proxy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +43,72 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/proxy': typeof ProxyRoute
+  '/studio': typeof StudioRoute
+  '/targets': typeof TargetsRoute
+  '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/proxy': typeof ProxyRoute
+  '/studio': typeof StudioRoute
+  '/targets': typeof TargetsRoute
+  '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/proxy': typeof ProxyRoute
+  '/studio': typeof StudioRoute
+  '/targets': typeof TargetsRoute
+  '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/proxy' | '/studio' | '/targets' | '/vulnerabilities'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/proxy' | '/studio' | '/targets' | '/vulnerabilities'
+  id: '__root__' | '/' | '/proxy' | '/studio' | '/targets' | '/vulnerabilities'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ProxyRoute: typeof ProxyRoute
+  StudioRoute: typeof StudioRoute
+  TargetsRoute: typeof TargetsRoute
+  VulnerabilitiesRoute: typeof VulnerabilitiesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vulnerabilities': {
+      id: '/vulnerabilities'
+      path: '/vulnerabilities'
+      fullPath: '/vulnerabilities'
+      preLoaderRoute: typeof VulnerabilitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/targets': {
+      id: '/targets'
+      path: '/targets'
+      fullPath: '/targets'
+      preLoaderRoute: typeof TargetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proxy': {
+      id: '/proxy'
+      path: '/proxy'
+      fullPath: '/proxy'
+      preLoaderRoute: typeof ProxyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +121,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ProxyRoute: ProxyRoute,
+  StudioRoute: StudioRoute,
+  TargetsRoute: TargetsRoute,
+  VulnerabilitiesRoute: VulnerabilitiesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
