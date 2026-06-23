@@ -132,6 +132,37 @@
   /* alias — app is always dark */
 }
 
+/* Light theme overrides — keep royal blue and gold accents */
+html.light {
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.18 0.02 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 260);
+  --secondary: oklch(0.94 0.01 260);
+  --secondary-foreground: oklch(0.18 0.02 260);
+  --muted: oklch(0.93 0.01 260);
+  --muted-foreground: oklch(0.45 0.02 260);
+  --accent: oklch(0.92 0.02 260);
+  --accent-foreground: oklch(0.18 0.02 260);
+  --border: oklch(0.18 0.02 260 / 10%);
+  --input: oklch(0.18 0.02 260 / 12%);
+  --sidebar: oklch(0.98 0.005 250);
+  --sidebar-foreground: oklch(0.18 0.02 260);
+  --sidebar-border: oklch(0.18 0.02 260 / 8%);
+  --sidebar-accent: oklch(0.93 0.01 260);
+  --sidebar-accent-foreground: oklch(0.18 0.02 260);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(15, 17, 23, 0.08);
+  color-scheme: light;
+}
+html.light body {
+  background-image:
+    radial-gradient(800px circle at 10% -10%, oklch(0.62 0.20 260 / 0.08), transparent 60%),
+    radial-gradient(600px circle at 110% 10%, oklch(0.78 0.16 75 / 0.06), transparent 60%);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
