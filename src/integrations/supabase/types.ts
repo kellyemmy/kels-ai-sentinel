@@ -52,6 +52,33 @@ export type Database = {
           },
         ]
       }
+      custom_payloads: {
+        Row: {
+          category: string | null
+          context_tag: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          payload: string | null
+        }
+        Insert: {
+          category?: string | null
+          context_tag?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payload?: string | null
+        }
+        Update: {
+          category?: string | null
+          context_tag?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payload?: string | null
+        }
+        Relationships: []
+      }
       intercepted_requests: {
         Row: {
           body: string | null
@@ -105,6 +132,200 @@ export type Database = {
           },
         ]
       }
+      js_intelligence: {
+        Row: {
+          discovered_at: string
+          extracted_endpoints: string | null
+          file_size_kb: number | null
+          id: string
+          js_file_url: string | null
+          secrets_detail: string | null
+          secrets_found: boolean | null
+          target_id: string | null
+        }
+        Insert: {
+          discovered_at?: string
+          extracted_endpoints?: string | null
+          file_size_kb?: number | null
+          id?: string
+          js_file_url?: string | null
+          secrets_detail?: string | null
+          secrets_found?: boolean | null
+          target_id?: string | null
+        }
+        Update: {
+          discovered_at?: string
+          extracted_endpoints?: string | null
+          file_size_kb?: number | null
+          id?: string
+          js_file_url?: string | null
+          secrets_detail?: string | null
+          secrets_found?: boolean | null
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "js_intelligence_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          severity: string | null
+          target_id: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          severity?: string | null
+          target_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          severity?: string | null
+          target_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_configs: {
+        Row: {
+          created_at: string
+          id: string
+          in_scope_assets: string | null
+          out_of_scope_assets: string | null
+          platform: string | null
+          program_name: string | null
+          program_url: string | null
+          reward_critical_max: number | null
+          reward_critical_min: number | null
+          reward_high_max: number | null
+          reward_high_min: number | null
+          reward_low_max: number | null
+          reward_low_min: number | null
+          reward_medium_max: number | null
+          reward_medium_min: number | null
+          special_rules: string | null
+          target_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          in_scope_assets?: string | null
+          out_of_scope_assets?: string | null
+          platform?: string | null
+          program_name?: string | null
+          program_url?: string | null
+          reward_critical_max?: number | null
+          reward_critical_min?: number | null
+          reward_high_max?: number | null
+          reward_high_min?: number | null
+          reward_low_max?: number | null
+          reward_low_min?: number | null
+          reward_medium_max?: number | null
+          reward_medium_min?: number | null
+          special_rules?: string | null
+          target_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          in_scope_assets?: string | null
+          out_of_scope_assets?: string | null
+          platform?: string | null
+          program_name?: string | null
+          program_url?: string | null
+          reward_critical_max?: number | null
+          reward_critical_min?: number | null
+          reward_high_max?: number | null
+          reward_high_min?: number | null
+          reward_low_max?: number | null
+          reward_low_min?: number | null
+          reward_medium_max?: number | null
+          reward_medium_min?: number | null
+          special_rules?: string | null
+          target_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_configs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subdomains: {
+        Row: {
+          discovered_at: string
+          id: string
+          in_scope: boolean | null
+          ip_address: string | null
+          open_ports: string | null
+          status_code: number | null
+          subdomain_url: string | null
+          target_id: string | null
+          technologies: string | null
+        }
+        Insert: {
+          discovered_at?: string
+          id?: string
+          in_scope?: boolean | null
+          ip_address?: string | null
+          open_ports?: string | null
+          status_code?: number | null
+          subdomain_url?: string | null
+          target_id?: string | null
+          technologies?: string | null
+        }
+        Update: {
+          discovered_at?: string
+          id?: string
+          in_scope?: boolean | null
+          ip_address?: string | null
+          open_ports?: string | null
+          status_code?: number | null
+          subdomain_url?: string | null
+          target_id?: string | null
+          technologies?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subdomains_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       targets: {
         Row: {
           created_at: string | null
@@ -131,6 +352,47 @@ export type Database = {
           testing_profile?: string | null
         }
         Relationships: []
+      }
+      tech_fingerprints: {
+        Row: {
+          category: string | null
+          cve_reference: string | null
+          discovered_at: string
+          id: string
+          known_vulnerable: boolean | null
+          target_id: string | null
+          technology_name: string | null
+          version: string | null
+        }
+        Insert: {
+          category?: string | null
+          cve_reference?: string | null
+          discovered_at?: string
+          id?: string
+          known_vulnerable?: boolean | null
+          target_id?: string | null
+          technology_name?: string | null
+          version?: string | null
+        }
+        Update: {
+          category?: string | null
+          cve_reference?: string | null
+          discovered_at?: string
+          id?: string
+          known_vulnerable?: boolean | null
+          target_id?: string | null
+          technology_name?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_fingerprints_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vulnerabilities: {
         Row: {
