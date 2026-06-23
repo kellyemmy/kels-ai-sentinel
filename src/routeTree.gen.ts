@@ -13,6 +13,7 @@ import { Route as VulnerabilitiesRouteImport } from './routes/vulnerabilities'
 import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as ScopeRouteImport } from './routes/scope'
+import { Route as ReconRouteImport } from './routes/recon'
 import { Route as ProxyRouteImport } from './routes/proxy'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -36,6 +37,11 @@ const ScopeRoute = ScopeRouteImport.update({
   path: '/scope',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReconRoute = ReconRouteImport.update({
+  id: '/recon',
+  path: '/recon',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProxyRoute = ProxyRouteImport.update({
   id: '/proxy',
   path: '/proxy',
@@ -50,6 +56,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
+  '/recon': typeof ReconRoute
   '/scope': typeof ScopeRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
+  '/recon': typeof ReconRoute
   '/scope': typeof ScopeRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
+  '/recon': typeof ReconRoute
   '/scope': typeof ScopeRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
@@ -77,16 +86,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/proxy'
+    | '/recon'
     | '/scope'
     | '/studio'
     | '/targets'
     | '/vulnerabilities'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/proxy' | '/scope' | '/studio' | '/targets' | '/vulnerabilities'
+  to:
+    | '/'
+    | '/proxy'
+    | '/recon'
+    | '/scope'
+    | '/studio'
+    | '/targets'
+    | '/vulnerabilities'
   id:
     | '__root__'
     | '/'
     | '/proxy'
+    | '/recon'
     | '/scope'
     | '/studio'
     | '/targets'
@@ -96,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProxyRoute: typeof ProxyRoute
+  ReconRoute: typeof ReconRoute
   ScopeRoute: typeof ScopeRoute
   StudioRoute: typeof StudioRoute
   TargetsRoute: typeof TargetsRoute
@@ -132,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScopeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recon': {
+      id: '/recon'
+      path: '/recon'
+      fullPath: '/recon'
+      preLoaderRoute: typeof ReconRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proxy': {
       id: '/proxy'
       path: '/proxy'
@@ -152,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProxyRoute: ProxyRoute,
+  ReconRoute: ReconRoute,
   ScopeRoute: ScopeRoute,
   StudioRoute: StudioRoute,
   TargetsRoute: TargetsRoute,
