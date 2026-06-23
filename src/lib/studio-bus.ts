@@ -19,3 +19,18 @@ export function takeStudioPreload(): StudioPreload | null {
   window.sessionStorage.removeItem(KEY);
   try { return JSON.parse(raw); } catch { return null; }
 }
+
+// Payload library → Studio body injection
+const PAYLOAD_KEY = "kelsai.studio.payload";
+export function setStudioPayload(payload: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(PAYLOAD_KEY, payload);
+  window.dispatchEvent(new CustomEvent("kelsai:studio-payload", { detail: payload }));
+}
+export function takeStudioPayload(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.sessionStorage.getItem(PAYLOAD_KEY);
+  if (!raw) return null;
+  window.sessionStorage.removeItem(PAYLOAD_KEY);
+  return raw;
+}
