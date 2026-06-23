@@ -148,8 +148,8 @@ function TopBar() {
 
   useEffect(() => {
     const html = document.documentElement;
-    if (theme === "light") html.classList.remove("dark");
-    else html.classList.add("dark");
+    if (theme === "light") html.classList.add("light");
+    else html.classList.remove("light");
     localStorage.setItem("kelsai.theme", theme);
   }, [theme]);
 
