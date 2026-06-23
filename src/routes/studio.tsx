@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Play, Plus, X, Copy } from "lucide-react";
+import { Play, Plus, X, Copy, Code2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { MethodBadge, StatusCodeBadge } from "@/components/Badges";
-import { takeStudioPreload } from "@/lib/studio-bus";
+import { takeStudioPreload, takeStudioPayload } from "@/lib/studio-bus";
+import { openPayloads } from "@/components/PayloadLibrary";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { loadForm, saveForm } from "@/lib/agent-config";
@@ -71,6 +72,15 @@ function Studio() {
       }));
       toast.success("Loaded from proxy");
     }
+    function applyPayload(p: string) {
+      setS((cur) => ({ ...cur, body: cur.body && cur.body.trim() && cur.body.trim() !== "{}" ? cur.body + "\n" + p : p }));
+      toast.success("Payload pasted into body");
+    }
+    const pay = takeStudioPayload();
+    if (pay) applyPayload(pay);
+    function onPayload(e: Event) { applyPayload((e as CustomEvent<string>).detail); }
+    window.addEventListener("kelsai:studio-payload", onPayload as EventListener);
+    return () => window.removeEventListener("kelsai:studio-payload", onPayload as EventListener);
   }, []);
 
   useEffect(() => { saveForm("kelsai.studio", s); }, [s]);
@@ -153,6 +163,9 @@ function Studio() {
         />
         <Button onClick={send} disabled={loading} className="bg-[color:var(--primary)] hover:bg-[color:var(--primary)]/90 text-white">
           <Play className="h-4 w-4 mr-1.5" /> Send
+        </Button>
+        <Button onClick={() => openPayloads()} variant="secondary" size="sm" title="Payload Library (Shift+P)">
+          <Code2 className="h-4 w-4 mr-1" /> Payloads
         </Button>
       </div>
 
