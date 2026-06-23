@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Crosshair, Activity, ShieldAlert, AlertOctagon } from "lucide-react";
+import { Crosshair, Activity, ShieldAlert, AlertOctagon, Shield, Radar, FileText, ScrollText, Rocket, CheckCircle2 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip,
   PieChart, Pie, Cell, Legend,
@@ -25,6 +25,8 @@ type AgentLog = {
 
 function Dashboard() {
   const [stats, setStats] = useState<{ targets: number; scanning: number; vulns: number; critical: number } | null>(null);
+  const [extra, setExtra] = useState<{ programs: number; subs: number; jsFiles: number; notes: number } | null>(null);
+  const [feed, setFeed] = useState<FeedItem[] | null>(null);
   const [sevData, setSevData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [owaspData, setOwaspData] = useState<{ name: string; value: number }[]>([]);
   const [logs, setLogs] = useState<AgentLog[] | null>(null);
@@ -32,10 +34,16 @@ function Dashboard() {
   const pausedScrollRef = useRef(false);
 
   async function loadAll() {
-    const [tRes, vRes, lRes] = await Promise.all([
+    const [tRes, vRes, lRes, pcRes, sdRes, jiRes, noRes, tList, vList] = await Promise.all([
       supabase.from("targets").select("status"),
       supabase.from("vulnerabilities").select("severity, owasp_category"),
       supabase.from("agent_logs").select("*").order("timestamp", { ascending: false }).limit(50),
+      supabase.from("program_configs").select("id", { count: "exact", head: true }),
+      supabase.from("subdomains").select("id", { count: "exact", head: true }),
+      supabase.from("js_intelligence").select("id", { count: "exact", head: true }),
+      supabase.from("notes").select("id, target_id, title, created_at").order("created_at", { ascending: false }).limit(10),
+      supabase.from("targets").select("id, domain_url, created_at, status").order("created_at", { ascending: false }).limit(20),
+      supabase.from("vulnerabilities").select("id, title, severity, target_id, discovered_at").order("discovered_at", { ascending: false }).limit(20),
     ]);
     const targets = tRes.data ?? [];
     const vulns = vRes.data ?? [];
@@ -44,6 +52,12 @@ function Dashboard() {
       scanning: targets.filter((t) => t.status === "scanning").length,
       vulns: vulns.length,
       critical: vulns.filter((v) => v.severity === "Critical").length,
+    });
+    setExtra({
+      programs: pcRes.count ?? 0,
+      subs: sdRes.count ?? 0,
+      jsFiles: jiRes.count ?? 0,
+      notes: (noRes.data ?? []).length,
     });
     const sevColors: Record<string, string> = {
       Low: "var(--sev-low)", Medium: "var(--sev-medium)",
@@ -59,6 +73,23 @@ function Dashboard() {
       value: vulns.filter((v) => v.owasp_category === c).length,
     })).filter((x) => x.value > 0));
     setLogs(((lRes.data ?? []) as AgentLog[]).reverse());
+
+    const targetMap = new Map<string, string>();
+    ((tList.data ?? []) as any[]).forEach((t) => targetMap.set(t.id, t.domain_url));
+    const items: FeedItem[] = [];
+    ((tList.data ?? []) as any[]).forEach((t) => {
+      items.push({ kind: "target", at: t.created_at, target: t.domain_url, text: "New target added", to: "/targets" });
+      if (t.status === "scanning") items.push({ kind: "scan", at: t.created_at, target: t.domain_url, text: "Scan launched", to: "/targets" });
+    });
+    ((vList.data ?? []) as any[]).forEach((v) => {
+      const sev = v.severity ?? "Low";
+      if (sev === "Critical" || sev === "High")
+        items.push({ kind: sev === "Critical" ? "vulnCritical" : "vulnHigh", at: v.discovered_at, target: targetMap.get(v.target_id) ?? "—", text: `${sev}: ${v.title}`, to: `/vulnerabilities?open=${v.id}` });
+    });
+    ((noRes.data ?? []) as any[]).forEach((n) => {
+      items.push({ kind: "note", at: n.created_at, target: targetMap.get(n.target_id) ?? "—", text: `Note: ${n.title}`, to: "/notes" });
+    });
+    setFeed(items.sort((a, b) => +new Date(b.at) - +new Date(a.at)).slice(0, 20));
   }
 
   useEffect(() => {
@@ -72,6 +103,9 @@ function Dashboard() {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "vulnerabilities" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "targets" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "notes" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "subdomains" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "js_intelligence" }, () => loadAll())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -117,7 +151,15 @@ function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <MiniStat label="Programs in Scope" value={extra?.programs} icon={<Shield className="h-3.5 w-3.5" />} />
+        <MiniStat label="Subdomains Discovered" value={extra?.subs} icon={<Radar className="h-3.5 w-3.5" />} />
+        <MiniStat label="JS Files Analyzed" value={extra?.jsFiles} icon={<ScrollText className="h-3.5 w-3.5" />} />
+        <MiniStat label="Notes Written" value={extra?.notes} icon={<FileText className="h-3.5 w-3.5" />} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_30%] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Panel title="Vulnerabilities by Severity">
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -149,6 +191,8 @@ function Dashboard() {
             )}
           </div>
         </Panel>
+        </div>
+        <ActivityFeed feed={feed} />
       </div>
 
       <Panel title="Agent Thought Stream">
@@ -214,4 +258,61 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 
 function EmptyState({ text }: { text: string }) {
   return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{text}</div>;
+}
+
+type FeedItem = {
+  kind: "target" | "scan" | "vulnCritical" | "vulnHigh" | "note" | "complete";
+  at: string;
+  target: string;
+  text: string;
+  to: string;
+};
+
+function MiniStat({ label, value, icon }: { label: string; value: number | undefined; icon: React.ReactNode }) {
+  return (
+    <div className="glass p-3">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span>{label}</span>
+        <span className="text-[color:var(--primary)]">{icon}</span>
+      </div>
+      <div className="mt-1.5 text-xl font-semibold">{value === undefined ? <Skeleton className="h-5 w-8" /> : value}</div>
+    </div>
+  );
+}
+
+function ActivityFeed({ feed }: { feed: FeedItem[] | null }) {
+  const icon: Record<FeedItem["kind"], React.ReactNode> = {
+    target: <Crosshair className="h-3.5 w-3.5 text-[color:var(--primary)]" />,
+    scan: <Rocket className="h-3.5 w-3.5 text-[color:var(--gold)]" />,
+    vulnCritical: <ShieldAlert className="h-3.5 w-3.5 text-[color:var(--sev-critical)]" />,
+    vulnHigh: <ShieldAlert className="h-3.5 w-3.5 text-[color:var(--sev-high)]" />,
+    note: <FileText className="h-3.5 w-3.5 text-muted-foreground" />,
+    complete: <CheckCircle2 className="h-3.5 w-3.5 text-[color:var(--success)]" />,
+  };
+  return (
+    <section className="glass p-4">
+      <h2 className="mb-3 text-sm font-semibold tracking-wide text-foreground/90">Recent Activity</h2>
+      <div className="space-y-1.5 max-h-[540px] overflow-y-auto">
+        {feed === null && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+        {feed && feed.length === 0 && <div className="py-6 text-center text-xs text-muted-foreground">No activity yet</div>}
+        {feed?.map((f, i) => (
+          <Link key={i} to={f.to} className="flex items-start gap-2 rounded-md border border-[color:var(--glass-border)] bg-white/[0.02] p-2 hover:bg-white/[0.05]">
+            <div className="mt-0.5">{icon[f.kind]}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs leading-tight truncate">{f.text}</div>
+              <div className="text-[10px] text-muted-foreground font-mono truncate">{f.target} · {timeAgo(f.at)}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function timeAgo(iso: string) {
+  const d = (Date.now() - +new Date(iso)) / 1000;
+  if (d < 60) return "just now";
+  if (d < 3600) return `${Math.floor(d/60)}m ago`;
+  if (d < 86400) return `${Math.floor(d/3600)}h ago`;
+  return `${Math.floor(d/86400)}d ago`;
 }
