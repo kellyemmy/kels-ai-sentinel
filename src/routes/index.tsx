@@ -259,3 +259,60 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 function EmptyState({ text }: { text: string }) {
   return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{text}</div>;
 }
+
+type FeedItem = {
+  kind: "target" | "scan" | "vulnCritical" | "vulnHigh" | "note" | "complete";
+  at: string;
+  target: string;
+  text: string;
+  to: string;
+};
+
+function MiniStat({ label, value, icon }: { label: string; value: number | undefined; icon: React.ReactNode }) {
+  return (
+    <div className="glass p-3">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span>{label}</span>
+        <span className="text-[color:var(--primary)]">{icon}</span>
+      </div>
+      <div className="mt-1.5 text-xl font-semibold">{value === undefined ? <Skeleton className="h-5 w-8" /> : value}</div>
+    </div>
+  );
+}
+
+function ActivityFeed({ feed }: { feed: FeedItem[] | null }) {
+  const icon: Record<FeedItem["kind"], React.ReactNode> = {
+    target: <Crosshair className="h-3.5 w-3.5 text-[color:var(--primary)]" />,
+    scan: <Rocket className="h-3.5 w-3.5 text-[color:var(--gold)]" />,
+    vulnCritical: <ShieldAlert className="h-3.5 w-3.5 text-[color:var(--sev-critical)]" />,
+    vulnHigh: <ShieldAlert className="h-3.5 w-3.5 text-[color:var(--sev-high)]" />,
+    note: <FileText className="h-3.5 w-3.5 text-muted-foreground" />,
+    complete: <CheckCircle2 className="h-3.5 w-3.5 text-[color:var(--success)]" />,
+  };
+  return (
+    <section className="glass p-4">
+      <h2 className="mb-3 text-sm font-semibold tracking-wide text-foreground/90">Recent Activity</h2>
+      <div className="space-y-1.5 max-h-[540px] overflow-y-auto">
+        {feed === null && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+        {feed && feed.length === 0 && <div className="py-6 text-center text-xs text-muted-foreground">No activity yet</div>}
+        {feed?.map((f, i) => (
+          <Link key={i} to={f.to} className="flex items-start gap-2 rounded-md border border-[color:var(--glass-border)] bg-white/[0.02] p-2 hover:bg-white/[0.05]">
+            <div className="mt-0.5">{icon[f.kind]}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs leading-tight truncate">{f.text}</div>
+              <div className="text-[10px] text-muted-foreground font-mono truncate">{f.target} · {timeAgo(f.at)}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function timeAgo(iso: string) {
+  const d = (Date.now() - +new Date(iso)) / 1000;
+  if (d < 60) return "just now";
+  if (d < 3600) return `${Math.floor(d/60)}m ago`;
+  if (d < 86400) return `${Math.floor(d/3600)}h ago`;
+  return `${Math.floor(d/86400)}d ago`;
+}
