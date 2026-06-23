@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VulnerabilitiesRouteImport } from './routes/vulnerabilities'
 import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as ScopeRouteImport } from './routes/scope'
 import { Route as ProxyRouteImport } from './routes/proxy'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -30,6 +31,11 @@ const StudioRoute = StudioRouteImport.update({
   path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScopeRoute = ScopeRouteImport.update({
+  id: '/scope',
+  path: '/scope',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProxyRoute = ProxyRouteImport.update({
   id: '/proxy',
   path: '/proxy',
@@ -44,6 +50,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
+  '/scope': typeof ScopeRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
+  '/scope': typeof ScopeRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
@@ -59,21 +67,36 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/proxy': typeof ProxyRoute
+  '/scope': typeof ScopeRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/proxy' | '/studio' | '/targets' | '/vulnerabilities'
+  fullPaths:
+    | '/'
+    | '/proxy'
+    | '/scope'
+    | '/studio'
+    | '/targets'
+    | '/vulnerabilities'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/proxy' | '/studio' | '/targets' | '/vulnerabilities'
-  id: '__root__' | '/' | '/proxy' | '/studio' | '/targets' | '/vulnerabilities'
+  to: '/' | '/proxy' | '/scope' | '/studio' | '/targets' | '/vulnerabilities'
+  id:
+    | '__root__'
+    | '/'
+    | '/proxy'
+    | '/scope'
+    | '/studio'
+    | '/targets'
+    | '/vulnerabilities'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProxyRoute: typeof ProxyRoute
+  ScopeRoute: typeof ScopeRoute
   StudioRoute: typeof StudioRoute
   TargetsRoute: typeof TargetsRoute
   VulnerabilitiesRoute: typeof VulnerabilitiesRoute
@@ -102,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scope': {
+      id: '/scope'
+      path: '/scope'
+      fullPath: '/scope'
+      preLoaderRoute: typeof ScopeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proxy': {
       id: '/proxy'
       path: '/proxy'
@@ -122,6 +152,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProxyRoute: ProxyRoute,
+  ScopeRoute: ScopeRoute,
   StudioRoute: StudioRoute,
   TargetsRoute: TargetsRoute,
   VulnerabilitiesRoute: VulnerabilitiesRoute,
