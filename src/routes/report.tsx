@@ -22,6 +22,7 @@ type Prog = { in_scope_assets: string | null; out_of_scope_assets: string | null
 function ReportBuilder() {
   const { target, setTarget } = useActiveTarget();
   const [targets, setTargets] = useState<Target[] | null>(null);
+  const [full, setFull] = useState<Target | null>(null);
   const [vulns, setVulns] = useState<Vuln[] | null>(null);
   const [prog, setProg] = useState<Prog | null>(null);
   const [executive, setExecutive] = useState("");
@@ -36,8 +37,14 @@ function ReportBuilder() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!target?.id) { setFull(null); return; }
+    const t = targets?.find(x => x.id === target.id) ?? null;
+    setFull(t);
+  }, [target?.id, targets]);
+
   async function generate() {
-    if (!target?.id) return;
+    if (!target?.id || !full) return;
     const [v, p] = await Promise.all([
       supabase.from("vulnerabilities").select("*").eq("target_id", target.id).order("severity"),
       supabase.from("program_configs").select("*").eq("target_id", target.id).maybeSingle(),
@@ -46,7 +53,7 @@ function ReportBuilder() {
     setVulns(vList);
     setProg((p.data as Prog) ?? null);
     const counts = counters(vList);
-    setExecutive(`Penetration test conducted against ${target.domain_url} on ${new Date().toLocaleDateString()}. ${vList.length} findings identified: ${counts.Critical} critical, ${counts.High} high, ${counts.Medium} medium, ${counts.Low} low. Overall risk rating: ${riskRating(counts)}.`);
+    setExecutive(`Penetration test conducted against ${full.domain_url} on ${new Date().toLocaleDateString()}. ${vList.length} findings identified: ${counts.Critical} critical, ${counts.High} high, ${counts.Medium} medium, ${counts.Low} low. Overall risk rating: ${riskRating(counts)}.`);
     setEdits(Object.fromEntries(vList.map(x => [x.id, {
       description: x.description ?? "", proof_of_concept: x.proof_of_concept ?? "", remediation: x.remediation ?? "",
     }])));
@@ -56,8 +63,8 @@ function ReportBuilder() {
   const counts = vulns ? counters(vulns) : { Critical: 0, High: 0, Medium: 0, Low: 0 };
 
   function markdown(): string {
-    if (!target || !vulns) return "";
-    let md = `# Penetration Test Report\n## ${target.domain_url}\n\n## Executive Summary\n${executive}\n\n## Scope & Methodology\n**Program:** ${prog?.program_name ?? "—"} (${prog?.platform ?? "—"})\n**Testing Profile:** ${target.testing_profile ?? "standard"}\n\n**In Scope:**\n${prog?.in_scope_assets ?? "—"}\n\n**Out of Scope:**\n${prog?.out_of_scope_assets ?? "—"}\n\n## Findings Summary\n| # | Title | Severity | OWASP | CVSS |\n|---|-------|----------|-------|------|\n`;
+    if (!full || !vulns) return "";
+    let md = `# Penetration Test Report\n## ${full.domain_url}\n\n## Executive Summary\n${executive}\n\n## Scope & Methodology\n**Program:** ${prog?.program_name ?? "—"} (${prog?.platform ?? "—"})\n**Testing Profile:** ${full.testing_profile ?? "standard"}\n\n**In Scope:**\n${prog?.in_scope_assets ?? "—"}\n\n**Out of Scope:**\n${prog?.out_of_scope_assets ?? "—"}\n\n## Findings Summary\n| # | Title | Severity | OWASP | CVSS |\n|---|-------|----------|-------|------|\n`;
     vulns.forEach((v, i) => { md += `| ${i + 1} | ${v.title} | ${v.severity} | ${v.owasp_category} | ${v.cvss_score ?? "—"} |\n`; });
     md += `\n## Detailed Findings\n`;
     vulns.forEach((v, i) => {
@@ -69,8 +76,8 @@ function ReportBuilder() {
   }
 
   function exportPdf() {
-    if (!target) return;
-    const html = renderHtml(target, vulns ?? [], prog, executive, conclusion, edits, counts);
+    if (!full) return;
+    const html = renderHtml(full, vulns ?? [], prog, executive, conclusion, edits, counts);
     const w = window.open("", "_blank");
     if (!w) { toast.error("Allow popups to export"); return; }
     w.document.write(html);
@@ -107,9 +114,9 @@ function ReportBuilder() {
 
       <section className="glass p-5">
         <h2 className="text-sm font-semibold mb-2">1. Executive Summary</h2>
-        {target && (
+        {full && (
           <div className="mb-3 grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-            <Stat label="Target" value={target.domain_url} />
+            <Stat label="Target" value={full.domain_url} />
             <Stat label="Critical" value={String(counts.Critical)} color="var(--sev-critical)" />
             <Stat label="High" value={String(counts.High)} color="var(--sev-high)" />
             <Stat label="Medium" value={String(counts.Medium)} color="var(--sev-medium)" />
@@ -123,7 +130,7 @@ function ReportBuilder() {
         <h2 className="text-sm font-semibold mb-2">2. Scope & Methodology</h2>
         <div className="text-xs space-y-2">
           <div><span className="text-muted-foreground">Program:</span> {prog?.program_name ?? "—"} ({prog?.platform ?? "—"})</div>
-          <div><span className="text-muted-foreground">Profile:</span> {target?.testing_profile ?? "standard"}</div>
+          <div><span className="text-muted-foreground">Profile:</span> {full?.testing_profile ?? "standard"}</div>
           <div><span className="text-muted-foreground">In Scope:</span><pre className="font-mono mt-1 whitespace-pre-wrap">{prog?.in_scope_assets ?? "—"}</pre></div>
           <div><span className="text-muted-foreground">Out of Scope:</span><pre className="font-mono mt-1 whitespace-pre-wrap">{prog?.out_of_scope_assets ?? "—"}</pre></div>
         </div>
