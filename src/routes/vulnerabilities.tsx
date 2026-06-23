@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, Copy } from "lucide-react";
+import { ChevronRight, Copy, Calculator, Code2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -13,6 +13,8 @@ import { OWASP_CATEGORIES, SEVERITIES } from "@/lib/owasp";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { z } from "zod";
+import { openCvss } from "@/components/CvssCalculator";
+import { openPayloads } from "@/components/PayloadLibrary";
 
 const searchSchema = z.object({ open: z.string().optional() });
 
@@ -182,6 +184,14 @@ function Tracker() {
                 >
                   <Copy className="h-4 w-4 mr-2" /> Copy as Bugcrowd Report
                 </Button>
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={() => openCvss({ vulnId: opened.id })}>
+                    <Calculator className="h-4 w-4 mr-2" /> CVSS Calculator
+                  </Button>
+                  <Button variant="secondary" onClick={() => openPayloads()}>
+                    <Code2 className="h-4 w-4 mr-2" /> Payload Library
+                  </Button>
+                </div>
               </div>
             </>
           )}
