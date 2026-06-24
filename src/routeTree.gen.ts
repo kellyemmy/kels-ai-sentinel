@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VulnerabilitiesRouteImport } from './routes/vulnerabilities'
 import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ScopeRouteImport } from './routes/scope'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ReconRouteImport } from './routes/recon'
@@ -33,6 +34,11 @@ const TargetsRoute = TargetsRouteImport.update({
 const StudioRoute = StudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScopeRoute = ScopeRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/recon'
     | '/report'
     | '/scope'
+    | '/signup'
     | '/studio'
     | '/targets'
     | '/vulnerabilities'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/recon'
     | '/report'
     | '/scope'
+    | '/signup'
     | '/studio'
     | '/targets'
     | '/vulnerabilities'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/recon'
     | '/report'
     | '/scope'
+    | '/signup'
     | '/studio'
     | '/targets'
     | '/vulnerabilities'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   ReconRoute: typeof ReconRoute
   ReportRoute: typeof ReportRoute
   ScopeRoute: typeof ScopeRoute
+  SignupRoute: typeof SignupRoute
   StudioRoute: typeof StudioRoute
   TargetsRoute: typeof TargetsRoute
   VulnerabilitiesRoute: typeof VulnerabilitiesRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scope': {
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReconRoute: ReconRoute,
   ReportRoute: ReportRoute,
   ScopeRoute: ScopeRoute,
+  SignupRoute: SignupRoute,
   StudioRoute: StudioRoute,
   TargetsRoute: TargetsRoute,
   VulnerabilitiesRoute: VulnerabilitiesRoute,
