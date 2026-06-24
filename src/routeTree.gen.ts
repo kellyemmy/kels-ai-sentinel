@@ -17,6 +17,7 @@ import { Route as ScopeRouteImport } from './routes/scope'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ReconRouteImport } from './routes/recon'
 import { Route as ProxyRouteImport } from './routes/proxy'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -62,6 +63,11 @@ const ProxyRoute = ProxyRouteImport.update({
   path: '/proxy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/onboarding': typeof OnboardingRoute
   '/proxy': typeof ProxyRoute
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/onboarding': typeof OnboardingRoute
   '/proxy': typeof ProxyRoute
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/onboarding': typeof OnboardingRoute
   '/proxy': typeof ProxyRoute
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/notes'
+    | '/onboarding'
     | '/proxy'
     | '/recon'
     | '/report'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/notes'
+    | '/onboarding'
     | '/proxy'
     | '/recon'
     | '/report'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/notes'
+    | '/onboarding'
     | '/proxy'
     | '/recon'
     | '/report'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
+  OnboardingRoute: typeof OnboardingRoute
   ProxyRoute: typeof ProxyRoute
   ReconRoute: typeof ReconRoute
   ReportRoute: typeof ReportRoute
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProxyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notes': {
       id: '/notes'
       path: '/notes'
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
+  OnboardingRoute: OnboardingRoute,
   ProxyRoute: ProxyRoute,
   ReconRoute: ReconRoute,
   ReportRoute: ReportRoute,
