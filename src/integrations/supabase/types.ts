@@ -52,6 +52,47 @@ export type Database = {
           },
         ]
       }
+      auth_sessions: {
+        Row: {
+          auth_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used: string | null
+          session_data: Json
+          session_name: string
+          target_id: string | null
+        }
+        Insert: {
+          auth_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used?: string | null
+          session_data?: Json
+          session_name: string
+          target_id?: string | null
+        }
+        Update: {
+          auth_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used?: string | null
+          session_data?: Json
+          session_name?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auth_sessions_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_payloads: {
         Row: {
           category: string | null
