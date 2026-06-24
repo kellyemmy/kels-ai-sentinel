@@ -17,6 +17,9 @@ import {
   type AgentConfig,
 } from "@/lib/agent-config";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SessionManager } from "@/components/SessionManager";
+import { KeyRound, Crosshair } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 export const Route = createFileRoute("/targets")({
   head: () => ({ meta: [{ title: "Target Manager — Kels.Ai" }] }),
@@ -207,6 +210,16 @@ function TargetManager() {
             <Rocket className="mr-2 h-4 w-4" /> Launch Autonomous Agent
           </Button>
 
+          <div className="flex justify-end">
+            <SessionManager
+              trigger={
+                <Button variant="ghost" size="sm">
+                  <KeyRound className="h-3.5 w-3.5 mr-1" /> Sessions
+                </Button>
+              }
+            />
+          </div>
+
           {/* Phase strip */}
           <PhaseStrip phaseIdx={tracking?.phaseIdx ?? -1} />
 
@@ -215,7 +228,13 @@ function TargetManager() {
             <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Past Targets</h3>
             <div className="max-h-[260px] overflow-y-auto space-y-1.5 pr-1">
               {targets === null && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-              {targets && targets.length === 0 && <p className="text-sm text-muted-foreground">No targets yet.</p>}
+              {targets && targets.length === 0 && (
+                <EmptyState
+                  icon={Crosshair}
+                  title="No targets added yet"
+                  body="Add your first target using the form above to begin autonomous scanning."
+                />
+              )}
               {targets?.map((t) => (
                 <div key={t.id} className="flex items-center justify-between rounded-md border border-[color:var(--glass-border)] bg-white/[0.02] px-3 py-2">
                   <div className="min-w-0">
