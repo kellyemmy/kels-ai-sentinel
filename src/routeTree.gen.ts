@@ -13,6 +13,7 @@ import { Route as VulnerabilitiesRouteImport } from './routes/vulnerabilities'
 import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScopeRouteImport } from './routes/scope'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ReconRouteImport } from './routes/recon'
@@ -41,6 +42,11 @@ const StudioRoute = StudioRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScopeRoute = ScopeRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/recon'
     | '/report'
     | '/scope'
+    | '/settings'
     | '/signup'
     | '/studio'
     | '/targets'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/recon'
     | '/report'
     | '/scope'
+    | '/settings'
     | '/signup'
     | '/studio'
     | '/targets'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/recon'
     | '/report'
     | '/scope'
+    | '/settings'
     | '/signup'
     | '/studio'
     | '/targets'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   ReconRoute: typeof ReconRoute
   ReportRoute: typeof ReportRoute
   ScopeRoute: typeof ScopeRoute
+  SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   StudioRoute: typeof StudioRoute
   TargetsRoute: typeof TargetsRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scope': {
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReconRoute: ReconRoute,
   ReportRoute: ReportRoute,
   ScopeRoute: ScopeRoute,
+  SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   StudioRoute: StudioRoute,
   TargetsRoute: TargetsRoute,
