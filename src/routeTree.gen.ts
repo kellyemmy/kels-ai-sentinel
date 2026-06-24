@@ -12,11 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VulnerabilitiesRouteImport } from './routes/vulnerabilities'
 import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScopeRouteImport } from './routes/scope'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ReconRouteImport } from './routes/recon'
 import { Route as ProxyRouteImport } from './routes/proxy'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotesRouteImport } from './routes/notes'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VulnerabilitiesRoute = VulnerabilitiesRouteImport.update({
@@ -32,6 +37,16 @@ const TargetsRoute = TargetsRouteImport.update({
 const StudioRoute = StudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScopeRoute = ScopeRouteImport.update({
@@ -54,9 +69,24 @@ const ProxyRoute = ProxyRouteImport.update({
   path: '/proxy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -67,22 +97,32 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/onboarding': typeof OnboardingRoute
   '/proxy': typeof ProxyRoute
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/onboarding': typeof OnboardingRoute
   '/proxy': typeof ProxyRoute
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
@@ -90,11 +130,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/onboarding': typeof OnboardingRoute
   '/proxy': typeof ProxyRoute
   '/recon': typeof ReconRoute
   '/report': typeof ReportRoute
   '/scope': typeof ScopeRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/targets': typeof TargetsRoute
   '/vulnerabilities': typeof VulnerabilitiesRoute
@@ -103,33 +148,48 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
+    | '/login'
     | '/notes'
+    | '/onboarding'
     | '/proxy'
     | '/recon'
     | '/report'
     | '/scope'
+    | '/settings'
+    | '/signup'
     | '/studio'
     | '/targets'
     | '/vulnerabilities'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
+    | '/login'
     | '/notes'
+    | '/onboarding'
     | '/proxy'
     | '/recon'
     | '/report'
     | '/scope'
+    | '/settings'
+    | '/signup'
     | '/studio'
     | '/targets'
     | '/vulnerabilities'
   id:
     | '__root__'
     | '/'
+    | '/forgot-password'
+    | '/login'
     | '/notes'
+    | '/onboarding'
     | '/proxy'
     | '/recon'
     | '/report'
     | '/scope'
+    | '/settings'
+    | '/signup'
     | '/studio'
     | '/targets'
     | '/vulnerabilities'
@@ -137,11 +197,16 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
+  OnboardingRoute: typeof OnboardingRoute
   ProxyRoute: typeof ProxyRoute
   ReconRoute: typeof ReconRoute
   ReportRoute: typeof ReportRoute
   ScopeRoute: typeof ScopeRoute
+  SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
   StudioRoute: typeof StudioRoute
   TargetsRoute: typeof TargetsRoute
   VulnerabilitiesRoute: typeof VulnerabilitiesRoute
@@ -168,6 +233,20 @@ declare module '@tanstack/react-router' {
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scope': {
@@ -198,11 +277,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProxyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notes': {
       id: '/notes'
       path: '/notes'
       fullPath: '/notes'
       preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -217,11 +317,16 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
+  OnboardingRoute: OnboardingRoute,
   ProxyRoute: ProxyRoute,
   ReconRoute: ReconRoute,
   ReportRoute: ReportRoute,
   ScopeRoute: ScopeRoute,
+  SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
   StudioRoute: StudioRoute,
   TargetsRoute: TargetsRoute,
   VulnerabilitiesRoute: VulnerabilitiesRoute,

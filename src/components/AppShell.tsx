@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Crosshair, Radio, ShieldAlert, Zap, Search,
   Shield, Radar, FileText, ClipboardList, Sun, Moon, Keyboard, Target as TargetIcon,
+  Settings as SettingsIcon, Menu, X,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { KelsLogo } from "@/components/Logo";
@@ -12,6 +13,10 @@ import { ActiveTargetProvider, useActiveTarget } from "@/contexts/ActiveTargetCo
 import { CvssCalculatorHost } from "@/components/CvssCalculator";
 import { PayloadLibraryHost } from "@/components/PayloadLibrary";
 import { KeyboardShortcutsHost } from "@/components/KeyboardShortcuts";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthGate, isPublicPath } from "@/components/AuthGate";
+import { UserMenu } from "@/components/UserMenu";
+import { BackendStatus } from "@/components/BackendStatus";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const NAV_PRIMARY: NavItem[] = [
@@ -30,16 +35,28 @@ const NAV_SECONDARY: NavItem[] = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <ActiveTargetProvider>
-      <Shell>{children}</Shell>
-    </ActiveTargetProvider>
+    <AuthProvider>
+      <ActiveTargetProvider>
+        <AuthGate>
+          <ShellRouter>{children}</ShellRouter>
+        </AuthGate>
+      </ActiveTargetProvider>
+    </AuthProvider>
   );
 }
 
-function Shell({ children }: { children: ReactNode }) {
+function ShellRouter({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (isPublicPath(pathname) || pathname === "/onboarding") {
+    return <>{children}</>;
+  }
+  return <Shell pathname={pathname}>{children}</Shell>;
+}
+
+function Shell({ children, pathname }: { children: ReactNode; pathname: string }) {
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -52,11 +69,18 @@ function Shell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Close mobile sidebar on route change
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <aside
         className={cn(
-          "sticky top-0 z-30 flex h-screen flex-col border-r border-[color:var(--glass-border)] bg-sidebar/80 backdrop-blur-md transition-[width] duration-200",
+          "z-40 flex h-screen flex-col border-r border-[color:var(--glass-border)] bg-sidebar/95 backdrop-blur-md transition-all duration-200",
+          "md:sticky md:top-0",
+          mobileOpen
+            ? "fixed inset-y-0 left-0 w-[260px]"
+            : "fixed inset-y-0 left-0 -translate-x-full md:translate-x-0 md:relative",
           collapsed ? "w-[68px]" : "w-[248px]",
         )}
       >
@@ -92,6 +116,8 @@ function Shell({ children }: { children: ReactNode }) {
           {NAV_PRIMARY.map((item) => <NavLink key={item.to} item={item} pathname={pathname} collapsed={collapsed} />)}
           <div className="my-3 mx-1 border-t border-[color:var(--glass-border)]" />
           {NAV_SECONDARY.map((item) => <NavLink key={item.to} item={item} pathname={pathname} collapsed={collapsed} />)}
+          <div className="my-3 mx-1 border-t border-[color:var(--glass-border)]" />
+          <NavLink item={{ to: "/settings", label: "Settings", icon: SettingsIcon }} pathname={pathname} collapsed={collapsed} />
         </nav>
 
         <button
@@ -103,8 +129,10 @@ function Shell({ children }: { children: ReactNode }) {
         </button>
       </aside>
 
+      {mobileOpen && <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setMobileOpen(false)} />}
+
       <main className="min-w-0 flex-1">
-        <TopBar />
+        <TopBar onMenu={() => setMobileOpen((v) => !v)} mobileOpen={mobileOpen} />
         {children}
       </main>
 
@@ -139,8 +167,10 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
   );
 }
 
-function TopBar() {
+function TopBar({ onMenu, mobileOpen }: { onMenu: () => void; mobileOpen: boolean }) {
   const { target } = useActiveTarget();
+  const [engineOffline, setEngineOffline] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark";
     return (localStorage.getItem("kelsai.theme") as any) ?? "dark";
@@ -154,15 +184,25 @@ function TopBar() {
   }, [theme]);
 
   return (
+    <>
     <div className="sticky top-0 z-20 flex h-12 items-center justify-end gap-2 border-b border-[color:var(--glass-border)] bg-background/60 px-4 backdrop-blur-md">
+      <button
+        type="button"
+        onClick={onMenu}
+        className="md:hidden mr-auto rounded-md border border-[color:var(--glass-border)] bg-white/[0.02] p-1.5 text-muted-foreground"
+        title="Menu"
+      >
+        {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+      </button>
       {target ? (
-        <div className="mr-auto inline-flex items-center gap-1.5 rounded-full border border-[color:var(--primary)]/40 bg-[color:var(--primary)]/10 px-2.5 py-0.5 text-[11px] text-[color:var(--primary)]">
+        <div className="md:mr-auto hidden md:inline-flex items-center gap-1.5 rounded-full border border-[color:var(--primary)]/40 bg-[color:var(--primary)]/10 px-2.5 py-0.5 text-[11px] text-[color:var(--primary)]">
           <TargetIcon className="h-3 w-3" />
           <span className="font-mono">{target.domain_url}</span>
         </div>
       ) : (
-        <div className="mr-auto text-[11px] text-muted-foreground">No active target — pick one on any page</div>
+        <div className="md:mr-auto hidden md:block text-[11px] text-muted-foreground">No active target — pick one on any page</div>
       )}
+      <BackendStatus onChange={(s) => setEngineOffline(s === "offline")} />
       <button
         type="button"
         onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }))}
@@ -179,6 +219,15 @@ function TopBar() {
       >
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </button>
+      <UserMenu />
     </div>
+    {engineOffline && !bannerDismissed && (
+      <div className="sticky top-12 z-10 flex items-center gap-3 border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs text-amber-200">
+        <span>⚠ Kels.Ai agent backend is unreachable. Scans will not run until the engine is online. Start with:</span>
+        <code className="font-mono bg-black/40 px-2 py-0.5 rounded">cd core_engine &amp;&amp; python main.py</code>
+        <button onClick={() => setBannerDismissed(true)} className="ml-auto text-amber-300 hover:text-white">Dismiss</button>
+      </div>
+    )}
+    </>
   );
 }
