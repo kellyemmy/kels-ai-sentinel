@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, Copy, Calculator, Code2, GitCompare, ChevronRight as ArrowR } from "lucide-react";
+import { ChevronRight, Copy, Calculator, Code2, GitCompare, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -103,7 +103,7 @@ function Tracker() {
               >
                 {VULN_STATUS_LABEL[s]}: <span className="font-mono">{counts[s] ?? 0}</span>
               </button>
-              {i < VULN_STATUSES.length - 1 && <ArrowR className="h-3 w-3 text-muted-foreground" />}
+              {i < VULN_STATUSES.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
             </div>
           );
         })}
