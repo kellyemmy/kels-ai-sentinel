@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Crosshair, Radio, ShieldAlert, Zap, Search,
   Shield, Radar, FileText, ClipboardList, Sun, Moon, Keyboard, Target as TargetIcon,
-  Settings as SettingsIcon, Menu, X,
+  Settings as SettingsIcon, Menu, X, KeyRound,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { KelsLogo } from "@/components/Logo";
@@ -17,6 +17,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGate, isPublicPath } from "@/components/AuthGate";
 import { UserMenu } from "@/components/UserMenu";
 import { BackendStatus } from "@/components/BackendStatus";
+import { NotificationBell } from "@/components/NotificationBell";
+import { QuickActionFab } from "@/components/QuickActionFab";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const NAV_PRIMARY: NavItem[] = [
@@ -30,8 +32,27 @@ const NAV_SECONDARY: NavItem[] = [
   { to: "/scope", label: "Scope Manager", icon: Shield },
   { to: "/recon", label: "Recon Lab", icon: Radar },
   { to: "/notes", label: "Notes Workspace", icon: FileText },
+  { to: "/sessions", label: "Session Manager", icon: KeyRound },
   { to: "/report", label: "Report Builder", icon: ClipboardList },
 ];
+
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Dashboard",
+  "/targets": "Target Manager",
+  "/proxy": "Live Intercept Proxy",
+  "/vulnerabilities": "Vulnerability Tracker",
+  "/studio": "API Testing Studio",
+  "/scope": "Scope Manager",
+  "/recon": "Recon Lab",
+  "/notes": "Notes Workspace",
+  "/sessions": "Session Manager",
+  "/report": "Report Builder",
+  "/settings": "Settings",
+  "/login": "Sign In",
+  "/signup": "Create Account",
+  "/forgot-password": "Reset Password",
+  "/onboarding": "Welcome",
+};
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -47,6 +68,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function ShellRouter({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    const t = PAGE_TITLES[pathname] ?? PAGE_TITLES[Object.keys(PAGE_TITLES).find((k) => k !== "/" && pathname.startsWith(k)) ?? ""];
+    document.title = `${t ?? "Kels.Ai"} — Kels.Ai`;
+  }, [pathname]);
   if (isPublicPath(pathname) || pathname === "/onboarding") {
     return <>{children}</>;
   }
@@ -141,6 +166,7 @@ function Shell({ children, pathname }: { children: ReactNode; pathname: string }
       <CvssCalculatorHost />
       <PayloadLibraryHost />
       <KeyboardShortcutsHost />
+      <QuickActionFab />
     </div>
   );
 }
@@ -203,6 +229,7 @@ function TopBar({ onMenu, mobileOpen }: { onMenu: () => void; mobileOpen: boolea
         <div className="md:mr-auto hidden md:block text-[11px] text-muted-foreground">No active target — pick one on any page</div>
       )}
       <BackendStatus onChange={(s) => setEngineOffline(s === "offline")} />
+      <NotificationBell />
       <button
         type="button"
         onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }))}

@@ -7,7 +7,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Crosshair, Radio, ShieldAlert, Zap, Shield, Radar, FileText, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Crosshair, Radio, ShieldAlert, Zap, Shield, Radar, FileText, ClipboardList, KeyRound, Settings as SettingsIcon } from "lucide-react";
 
 const ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -18,7 +18,9 @@ const ITEMS = [
   { to: "/scope", label: "Scope Manager", icon: Shield },
   { to: "/recon", label: "Recon Lab", icon: Radar },
   { to: "/notes", label: "Notes Workspace", icon: FileText },
+  { to: "/sessions", label: "Session Manager", icon: KeyRound },
   { to: "/report", label: "Report Builder", icon: ClipboardList },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
 export function CommandPalette({

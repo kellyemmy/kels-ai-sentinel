@@ -59,14 +59,47 @@ export function TargetStatusBadge({ status }: { status: string | null | undefine
       </span>
     );
   }
+  if (s === "error") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/15 px-2 py-0.5 text-xs text-[color:var(--danger)]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--danger)]" /> error
+      </span>
+    );
+  }
   const map: Record<string, string> = {
     idle: "bg-muted text-muted-foreground border-border",
     completed: "bg-[color:var(--success)]/15 text-[color:var(--success)] border-[color:var(--success)]/30",
-    error: "bg-[color:var(--danger)]/15 text-[color:var(--danger)] border-[color:var(--danger)]/30",
   };
   return (
     <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", map[s] ?? map.idle)}>
       {s}
+    </span>
+  );
+}
+
+export const VULN_STATUSES = ["open", "in_progress", "verified", "submitted", "false_positive"] as const;
+export type VulnStatus = typeof VULN_STATUSES[number];
+export const VULN_STATUS_LABEL: Record<VulnStatus, string> = {
+  open: "Open",
+  in_progress: "In Progress",
+  verified: "Verified",
+  submitted: "Submitted",
+  false_positive: "False Positive",
+};
+export const VULN_STATUS_COLOR: Record<VulnStatus, { text: string; bg: string; border: string; ring: string }> = {
+  open:           { text: "text-muted-foreground",          bg: "bg-white/[0.04]",                       border: "border-[color:var(--glass-border)]",     ring: "ring-muted" },
+  in_progress:    { text: "text-[color:var(--primary)]",    bg: "bg-[color:var(--primary)]/15",          border: "border-[color:var(--primary)]/40",       ring: "ring-[color:var(--primary)]" },
+  verified:       { text: "text-[color:var(--success)]",    bg: "bg-[color:var(--success)]/15",          border: "border-[color:var(--success)]/40",       ring: "ring-[color:var(--success)]" },
+  submitted:      { text: "text-[color:var(--agent-planner)]", bg: "bg-[color:var(--agent-planner)]/15", border: "border-[color:var(--agent-planner)]/40", ring: "ring-[color:var(--agent-planner)]" },
+  false_positive: { text: "text-[color:var(--danger)]",     bg: "bg-[color:var(--danger)]/15",           border: "border-[color:var(--danger)]/40",        ring: "ring-[color:var(--danger)]" },
+};
+
+export function VulnStatusBadge({ status }: { status: string | null | undefined }) {
+  const s = (VULN_STATUSES as readonly string[]).includes(status as any) ? (status as VulnStatus) : "open";
+  const c = VULN_STATUS_COLOR[s];
+  return (
+    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium", c.bg, c.text, c.border)}>
+      {VULN_STATUS_LABEL[s]}
     </span>
   );
 }

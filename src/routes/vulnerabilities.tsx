@@ -1,20 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, Copy, Calculator, Code2 } from "lucide-react";
+import { ChevronRight, Copy, Calculator, Code2, GitCompare, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { SeverityBadge } from "@/components/Badges";
+import { SeverityBadge, VulnStatusBadge, VULN_STATUSES, VULN_STATUS_LABEL, VULN_STATUS_COLOR, type VulnStatus } from "@/components/Badges";
 import { OWASP_CATEGORIES, SEVERITIES } from "@/lib/owasp";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { z } from "zod";
 import { openCvss } from "@/components/CvssCalculator";
 import { openPayloads } from "@/components/PayloadLibrary";
+import { ScanComparison } from "@/components/ScanComparison";
+import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ open: z.string().optional() });
 
@@ -39,6 +41,7 @@ function Tracker() {
   const [cat, setCat] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [q, setQ] = useState("");
+  const [compareOpen, setCompareOpen] = useState(false);
 
   async function load() {
     const { data } = await supabase.from("vulnerabilities").select("*").order("discovered_at", { ascending: false });
@@ -65,12 +68,51 @@ function Tracker() {
 
   const opened = items?.find((v) => v.id === openId) ?? null;
 
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { open: 0, in_progress: 0, verified: 0, submitted: 0, false_positive: 0 };
+    (items ?? []).forEach((v) => { const s = v.status ?? "open"; if (s in c) c[s]++; });
+    return c;
+  }, [items]);
+
   return (
     <div className="p-6 space-y-4">
-      <header>
-        <h1 className="text-2xl font-bold text-glow-blue">Vulnerability Tracker</h1>
-        <p className="text-sm text-muted-foreground">Triage and report findings across all targets</p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-glow-blue">Vulnerability Tracker</h1>
+          <p className="text-sm text-muted-foreground">Triage and report findings across all targets</p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => setCompareOpen((v) => !v)}>
+          <GitCompare className="h-3.5 w-3.5 mr-1" /> {compareOpen ? "Close Compare" : "Compare"}
+        </Button>
       </header>
+
+      {/* Kanban status strip */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(VULN_STATUSES as readonly VulnStatus[]).map((s, i) => {
+          const isActive = status === s;
+          const c = VULN_STATUS_COLOR[s];
+          return (
+            <div key={s} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStatus(isActive ? "all" : s)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                  isActive ? cn(c.bg, c.text, c.border, "shadow-[0_0_0_2px_var(--background),0_0_0_3px_currentColor]") : cn("border-[color:var(--glass-border)] bg-white/[0.02] hover:bg-white/[0.06]", c.text)
+                )}
+              >
+                {VULN_STATUS_LABEL[s]}: <span className="font-mono">{counts[s] ?? 0}</span>
+              </button>
+              {i < VULN_STATUSES.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
+            </div>
+          );
+        })}
+      </div>
+
+      {compareOpen ? (
+        <ScanComparison onClose={() => setCompareOpen(false)} />
+      ) : (
+      <>
 
       <div className="glass p-3 flex flex-wrap gap-2">
         <Select value={sev} onValueChange={setSev}>
@@ -91,9 +133,9 @@ function Tracker() {
           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="verified">Verified</SelectItem>
-            <SelectItem value="false_positive">False Positive</SelectItem>
+            {(VULN_STATUSES as readonly VulnStatus[]).map((s) => (
+              <SelectItem key={s} value={s}>{VULN_STATUS_LABEL[s]}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title or description…" className="w-[280px]" />
@@ -110,6 +152,7 @@ function Tracker() {
           <article key={v.id} className="glass p-4 space-y-2 hover:bg-white/[0.05] transition-colors">
             <div className="flex flex-wrap items-center gap-2">
               <SeverityBadge severity={v.severity ?? "Low"} />
+              <VulnStatusBadge status={v.status} />
               <span className="text-[11px] text-muted-foreground font-mono">{v.owasp_category}</span>
             </div>
             <h3 className="font-semibold text-white leading-tight">{v.title}</h3>
@@ -126,6 +169,8 @@ function Tracker() {
           </article>
         ))}
       </div>
+      </>
+      )}
 
       <Sheet open={!!opened} onOpenChange={(v) => { if (!v) navigate({ to: "/vulnerabilities", search: {} }); }}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
@@ -137,6 +182,7 @@ function Tracker() {
               <div className="space-y-4 mt-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <SeverityBadge severity={opened.severity ?? "Low"} />
+                  <VulnStatusBadge status={opened.status} />
                   <span className="text-xs text-muted-foreground font-mono">{opened.owasp_category}</span>
                   {opened.cvss_score != null && <span className="text-xs">CVSS <span className="font-mono">{opened.cvss_score}</span></span>}
                 </div>
@@ -168,9 +214,9 @@ function Tracker() {
                   >
                     <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="verified">Verified</SelectItem>
-                      <SelectItem value="false_positive">False Positive</SelectItem>
+                      {(VULN_STATUSES as readonly VulnStatus[]).map((s) => (
+                        <SelectItem key={s} value={s}>{VULN_STATUS_LABEL[s]}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </section>

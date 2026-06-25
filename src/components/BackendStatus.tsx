@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { loadAgentConfig } from "@/lib/agent-config";
 import { toast } from "sonner";
+import { setEngineStatus } from "@/lib/engine-status";
 
 type Status = "connecting" | "online" | "offline";
 
@@ -19,14 +20,16 @@ export function BackendStatus({ onChange }: { onChange?: (s: Status) => void }) 
         clearTimeout(t);
         const next: Status = r.ok ? "online" : "offline";
         if (mounted) {
-          if (lastStatus === "offline" && next === "online") toast.success("Engine reconnected ✓");
+          if (lastStatus === "offline" && next === "online") toast.success("✓ Engine connected — ready to scan");
           setStatus(next);
+          setEngineStatus(next);
           onChange?.(next);
           lastStatus = next;
         }
       } catch {
         if (mounted) {
           setStatus("offline");
+          setEngineStatus("offline");
           onChange?.("offline");
           lastStatus = "offline";
         }
@@ -34,7 +37,9 @@ export function BackendStatus({ onChange }: { onChange?: (s: Status) => void }) 
     }
     ping();
     const i = setInterval(ping, 30_000);
-    return () => { mounted = false; clearInterval(i); };
+    const onRetry = () => ping();
+    window.addEventListener("kelsai:retry-engine", onRetry);
+    return () => { mounted = false; clearInterval(i); window.removeEventListener("kelsai:retry-engine", onRetry); };
   }, [onChange]);
 
   const colors = { online: "var(--success)", offline: "var(--danger)", connecting: "#f59e0b" } as const;
