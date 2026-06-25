@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Rocket, Cpu, Eye, EyeOff, ChevronDown, ChevronRight, XOctagon } from "lucide-react";
+import { Rocket, Cpu, Eye, EyeOff, ChevronDown, ChevronRight, XOctagon, RotateCcw, Trash2, Radar, ServerCrash, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +18,10 @@ import {
 } from "@/lib/agent-config";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SessionManager } from "@/components/SessionManager";
-import { KeyRound, Crosshair } from "lucide-react";
+import { KeyRound, Crosshair, Link as LinkIcon } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import { onEngineStatus, getEngineStatus, pingEngine, type EngineStatus } from "@/lib/engine-status";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/targets")({
   head: () => ({ meta: [{ title: "Target Manager — Kels.Ai" }] }),
@@ -58,10 +60,30 @@ function TargetManager() {
   const [tracking, setTracking] = useState<{ targetId: string; startedAt: number; phaseIdx: number } | null>(null);
   const [liveLogs, setLiveLogs] = useState<AgentLog[]>([]);
   const [elapsed, setElapsed] = useState(0);
+  const [scanState, setScanState] = useState<"running" | "aborted" | "completed">("running");
+  const [summary, setSummary] = useState<{ critical: number; high: number; medium: number; low: number } | null>(null);
+  const [engine, setEngine] = useState<EngineStatus>(getEngineStatus());
+  const [showOfflineCard, setShowOfflineCard] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const phaseTimer = useRef<number | null>(null);
 
   useEffect(() => { setConfig(loadAgentConfig()); }, []);
   useEffect(() => { saveForm("kelsai.target.form", form); }, [form]);
+  useEffect(() => onEngineStatus(setEngine), []);
+
+  // FAB quick-add focus
+  useEffect(() => {
+    if (sessionStorage.getItem("kelsai.targets.autofocus") === "1") {
+      sessionStorage.removeItem("kelsai.targets.autofocus");
+      setTimeout(() => document.querySelector<HTMLInputElement>('input[placeholder^="https://"]')?.focus(), 50);
+    }
+  }, []);
+
+  // tick every 60s so stuck-scan UI re-evaluates
+  useEffect(() => {
+    const i = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(i);
+  }, []);
 
   async function loadTargets() {
     const { data } = await supabase.from("targets").select("*").order("created_at", { ascending: false });
@@ -77,7 +99,7 @@ function TargetManager() {
 
   // Elapsed timer + simulated phase progression while tracking
   useEffect(() => {
-    if (!tracking) return;
+    if (!tracking || scanState !== "running") return;
     const t = window.setInterval(() => setElapsed(Math.floor((Date.now() - tracking.startedAt) / 1000)), 1000);
     phaseTimer.current = window.setInterval(() => {
       setTracking((cur) => cur ? { ...cur, phaseIdx: Math.min(cur.phaseIdx + 1, AGENT_PHASES.length - 1) } : cur);
@@ -86,6 +108,28 @@ function TargetManager() {
       window.clearInterval(t);
       if (phaseTimer.current) window.clearInterval(phaseTimer.current);
     };
+  }, [tracking?.targetId, scanState]);
+
+  // Watch tracked target row for status → completed/error → end scan
+  useEffect(() => {
+    if (!tracking) return;
+    const ch = supabase.channel(`tt-${tracking.targetId}`)
+      .on("postgres_changes",
+        { event: "UPDATE", schema: "public", table: "targets", filter: `id=eq.${tracking.targetId}` },
+        async (p: any) => {
+          const st = p.new?.status;
+          if (st === "completed") {
+            setScanState("completed");
+            setTracking((cur) => cur ? { ...cur, phaseIdx: AGENT_PHASES.length - 1 } : cur);
+            const { data } = await supabase.from("vulnerabilities").select("severity").eq("target_id", tracking.targetId);
+            const sev = (data ?? []).reduce((acc, v) => { const k = (v.severity ?? "Low").toLowerCase(); (acc as any)[k] = ((acc as any)[k] ?? 0) + 1; return acc; }, { critical: 0, high: 0, medium: 0, low: 0 });
+            setSummary(sev as any);
+          } else if (st === "error") {
+            setScanState("aborted");
+          }
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, [tracking?.targetId]);
 
   // Subscribe to logs for current tracked target
@@ -124,6 +168,11 @@ function TargetManager() {
     if (!form.domain.trim()) errs.domain = "Required";
     setErrors(errs);
     if (Object.keys(errs).length) return;
+    if (getEngineStatus() === "offline") {
+      setShowOfflineCard(true);
+      toast.error("Agent engine is offline — start the backend first");
+      return;
+    }
     const { data, error } = await supabase
       .from("targets")
       .insert({ domain_url: form.domain.trim(), status: "scanning", testing_profile: form.profile })
@@ -154,6 +203,9 @@ function TargetManager() {
 
     setTracking({ targetId: data.id, startedAt: Date.now(), phaseIdx: 0 });
     setElapsed(0);
+    setScanState("running");
+    setSummary(null);
+    setShowOfflineCard(false);
   }
 
   async function abortScan() {
@@ -161,8 +213,30 @@ function TargetManager() {
     fetch(`${config.backendUrl.replace(/\/$/, "")}/agent/${tracking.targetId}`, { method: "DELETE" }).catch(() => {});
     await supabase.from("targets").update({ status: "idle" }).eq("id", tracking.targetId);
     toast("Scan aborted");
-    setTracking(null);
+    setScanState("aborted");
   }
+
+  // ---- Stuck-scan helpers ----
+  const THIRTY_MIN = 30 * 60 * 1000;
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  function ageMs(t: Target) { return now - +new Date(t.created_at); }
+  function effectiveStatus(t: Target): string {
+    if (t.status === "scanning" && ageMs(t) > TWO_HOURS) return "error";
+    return t.status;
+  }
+  function isStuck(t: Target) { return t.status === "scanning" && ageMs(t) > THIRTY_MIN; }
+
+  async function resetOne(id: string) {
+    await supabase.from("targets").update({ status: "error" }).eq("id", id);
+    toast.success("Status reset to error");
+  }
+  async function clearAllStuck() {
+    const stuck = (targets ?? []).filter(isStuck);
+    if (stuck.length === 0) { toast("No stuck scans"); return; }
+    await supabase.from("targets").update({ status: "error" }).in("id", stuck.map(t => t.id));
+    toast.success(`Reset ${stuck.length} stuck scan${stuck.length === 1 ? "" : "s"}`);
+  }
+  const stuckCount = (targets ?? []).filter(isStuck).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -225,7 +299,14 @@ function TargetManager() {
 
           {/* Past targets list */}
           <div>
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Past Targets</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Past Targets</h3>
+              {stuckCount > 0 && (
+                <Button size="sm" variant="ghost" onClick={clearAllStuck} className="text-[color:var(--danger)] h-7">
+                  <Trash2 className="h-3 w-3 mr-1" /> Clear All Stuck ({stuckCount})
+                </Button>
+              )}
+            </div>
             <div className="max-h-[260px] overflow-y-auto space-y-1.5 pr-1">
               {targets === null && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
               {targets && targets.length === 0 && (
@@ -241,7 +322,14 @@ function TargetManager() {
                     <div className="truncate font-mono text-sm">{t.domain_url}</div>
                     <div className="text-[11px] text-muted-foreground">{t.testing_profile} · {new Date(t.created_at).toLocaleString()}</div>
                   </div>
-                  <TargetStatusBadge status={t.status} />
+                  <div className="flex items-center gap-2">
+                    {isStuck(t) && (
+                      <Button size="sm" variant="ghost" onClick={() => resetOne(t.id)} className="h-6 px-2 text-[10px] text-[color:var(--danger)]">
+                        <RotateCcw className="h-3 w-3 mr-1" /> Reset
+                      </Button>
+                    )}
+                    <TargetStatusBadge status={effectiveStatus(t)} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -250,6 +338,12 @@ function TargetManager() {
 
         {/* RIGHT — AI Control Center / Live Tracking */}
         <section className="glass p-5 lg:col-span-2 space-y-4">
+          {showOfflineCard && engine === "offline" && (
+            <EngineOfflineCard onRetry={async () => {
+              await pingEngine(config.backendUrl);
+              if (getEngineStatus() === "online") setShowOfflineCard(false);
+            }} />
+          )}
           {!tracking ? (
             <>
               <div className="flex items-center gap-2"><Cpu className="h-4 w-4 text-[color:var(--primary)]" /><h2 className="font-semibold">AI Control Center</h2></div>
@@ -291,19 +385,43 @@ function TargetManager() {
                   <NumberField label="Timeout (min)" value={config.scanTimeoutMin} onChange={(v) => setConfig({ ...config, scanTimeoutMin: v })} />
                 </div>
               )}
+              <div className="border-t border-[color:var(--glass-border)] pt-4">
+                <EmptyState icon={Radar} title="No active scan" body="Launch a target to begin." />
+              </div>
             </>
           ) : (
             <>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold">Live Tracking</h2>
-                <Button size="sm" variant="destructive" onClick={abortScan}><XOctagon className="h-3.5 w-3.5 mr-1" /> Abort Scan</Button>
+                <div className="flex items-center gap-2">
+                  {scanState === "running" && <Button size="sm" variant="destructive" onClick={abortScan}><XOctagon className="h-3.5 w-3.5 mr-1" /> Abort</Button>}
+                  <Button size="sm" variant="ghost" onClick={() => { setTracking(null); setSummary(null); setScanState("running"); }}>Close</Button>
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground">Elapsed: <span className="font-mono text-foreground">{formatElapsed(elapsed)}</span></div>
+              <div className="text-xs text-muted-foreground">
+                Elapsed: <span className="font-mono text-foreground">{formatElapsed(elapsed)}</span>
+                {scanState === "aborted" && <span className="ml-2 text-[color:var(--danger)]">· paused</span>}
+                {scanState === "completed" && <span className="ml-2 text-[color:var(--success)]">· complete</span>}
+              </div>
               <PhaseStrip phaseIdx={tracking.phaseIdx} />
+              {scanState === "completed" && summary && (
+                <div className="rounded-md border border-[color:var(--success)]/40 bg-[color:var(--success)]/10 p-3 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-[color:var(--success)]" /> Scan Complete</div>
+                  <div className="flex flex-wrap gap-3 text-xs font-mono">
+                    <span className="text-[color:var(--sev-critical)]">{summary.critical} Critical</span>
+                    <span className="text-[color:var(--sev-high)]">{summary.high} High</span>
+                    <span className="text-[color:var(--sev-medium)]">{summary.medium} Medium</span>
+                    <span className="text-[color:var(--sev-low)]">{summary.low} Low</span>
+                  </div>
+                  <Link to="/report" className="inline-flex items-center gap-1 text-xs text-[color:var(--primary)] hover:underline">
+                    <LinkIcon className="h-3 w-3" /> View Full Report
+                  </Link>
+                </div>
+              )}
               <div className="rounded-md border border-[color:var(--glass-border)] bg-[#0a0a0f] p-2 h-[300px] overflow-y-auto font-mono text-[11px] space-y-1">
                 {liveLogs.length === 0 && <p className="text-muted-foreground">Awaiting agent activity<span className="blink">▍</span></p>}
                 {liveLogs.map((l) => (
-                  <div key={l.id} className="flex items-start gap-2 slide-in-up">
+                  <div key={l.id} className="flex items-start gap-2 slide-in-bottom">
                     <span className="text-muted-foreground">{new Date(l.timestamp).toLocaleTimeString()}</span>
                     <AgentBadge name={l.agent_name} />
                     <span>{l.log_message}</span>
@@ -314,6 +432,22 @@ function TargetManager() {
           )}
         </section>
       </div>
+    </div>
+  );
+}
+
+function EngineOfflineCard({ onRetry }: { onRetry: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="rounded-md border border-[color:var(--danger)]/50 bg-[color:var(--danger)]/10 p-4 space-y-3">
+      <div className="flex items-center gap-2 font-semibold text-[color:var(--danger)]">
+        <ServerCrash className="h-4 w-4" /> Agent Engine Offline
+      </div>
+      <p className="text-xs text-muted-foreground">Start your local Python backend to run scans.</p>
+      <pre className="rounded-md border border-[color:var(--glass-border)] bg-[#0a0a0f] p-3 font-mono text-[11px] whitespace-pre-wrap">{`cd core_engine\npython main.py`}</pre>
+      <Button size="sm" variant="secondary" onClick={async () => { setBusy(true); await onRetry(); setBusy(false); }} disabled={busy}>
+        <RefreshCw className={`h-3.5 w-3.5 mr-1 ${busy ? "animate-spin" : ""}`} /> Retry Connection
+      </Button>
     </div>
   );
 }
