@@ -252,6 +252,50 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          read: boolean
+          target_id: string | null
+          title: string
+          type: string
+          user_id: string
+          vuln_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          read?: boolean
+          target_id?: string | null
+          title: string
+          type: string
+          user_id: string
+          vuln_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          read?: boolean
+          target_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+          vuln_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       program_configs: {
         Row: {
           created_at: string
